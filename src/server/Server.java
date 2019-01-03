@@ -1,21 +1,30 @@
 package server;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import server.packetprocessing.PacketProcessor;
 import server.packetprocessing.ServerPacketProcessor;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Server {
 
-    public final static String PACKET_PROTOCOL_KEY = "IA";
+    private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
     private boolean running;
 
     private ServerPacketProcessor packetProcessor;
 
-    private ServerConnectionHandler<String> connectionHandler;
+    private ServerConnectionHandler connectionHandler;
+
+    private List<PacketProcessor> packetProcessorList = new ArrayList<>();
+
+    public final static String PACKET_PROTOCOL_KEY = "IA";
 
     // UDP
     private Thread udpSocketThread;
@@ -23,20 +32,20 @@ public class Server {
     private byte[] udpBuffer = new byte[512];
     private int udpPort;
 
-    // TCP
-    private int tcpPort;
 
-    public Server(int udpPort, int tcpPort) {
+    public Server(int udpPort) {
         this.udpPort = udpPort;
-        this.tcpPort = tcpPort;
         this.packetProcessor   = new ServerPacketProcessor(this);
-        this.connectionHandler = new ServerConnectionHandler<>();
+        this.connectionHandler = new ServerConnectionHandler(this, 10);
     }
 
     public boolean StartServer() {
         running = true;
-        packetProcessor.start();
-        udpSocketThread = new Thread(() -> runUdpThread(), "Udp Thread");
+
+        // Start all registered processors
+        for (PacketProcessor processor : packetProcessorList) { processor.start(); }
+
+        udpSocketThread = new Thread(() -> runUdpThread(), "Udp Server Thread");
         udpSocketThread.start();
 
         return true;
@@ -57,15 +66,26 @@ public class Server {
             int         receivedPort    = packet.getPort();
 
             packet = new DatagramPacket(udpBuffer, udpBuffer.length, receivedAddress, receivedPort);
-            packetProcessor.AddUdpPacket(packet);
+            packetProcessor.addWork(packet);
         }
         udpSocket.close();
+    }
+
+    public void registerPacketProcessor(PacketProcessor processor) {
+        if (packetProcessorList.contains(processor)) {
+            LOGGER.error("Attempting to register packetProcessor " + processor.getClass() +
+                            " multiple times for this server. Note: packet processors register themselves on creation.");
+            return;
+        }
+
+        packetProcessorList.add(processor);
     }
 
     /** Server Shutdown Related Logic **/
     public void shutdown() {
         running = false;
-        packetProcessor.shutdown();
+        // Shutdown all registered processors
+        for (PacketProcessor processor : packetProcessorList) { processor.shutdown(); }
     }
 
     public ServerConnectionHandler getConnectionHandler() {

@@ -1,28 +1,16 @@
 package shared.Messages.Unreliable;
 
-import shared.Messages.Types.MessageData;
-import com.jfastnet.messages.Message;
+import shared.Messages.NetMessage;
+import shared.Messages.Types.BaseMessageData;
 
 /**
  * No-Param constructor is required.
  * @param <T> Type of
  */
-public abstract class UnreliableMessage<T extends MessageData> extends Message<T> {
-
-    private T messageData;
-
-    public UnreliableMessage() {}
+public abstract class UnreliableMessage<T extends BaseMessageData> extends NetMessage<T> {
 
     public UnreliableMessage(T data) {
-        this.messageData = data;
-    }
-
-    @Override
-    public ReliableMode getReliableMode() { return ReliableMode.UNRELIABLE; }
-
-    @Override
-    public void process(MessageData context) {
-        processReceivedMessage(messageData);
+        super(data);
     }
 
     protected abstract void processReceivedMessage(T message);

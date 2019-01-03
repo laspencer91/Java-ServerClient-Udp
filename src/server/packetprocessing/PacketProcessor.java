@@ -14,6 +14,7 @@ public abstract class PacketProcessor {
 
     public PacketProcessor(Server parentServer) {
         this.parentServer = parentServer;
+        parentServer.registerPacketProcessor(this);
     }
 
     /**
@@ -45,7 +46,7 @@ public abstract class PacketProcessor {
      * Adds a packet to the datagram queue. This queue is consistently emptied and process by a running task
      * @param packet The filled Datagram packet to process.
      */
-    public void AddUdpPacket(DatagramPacket packet) {
+    public void addWork(DatagramPacket packet) {
         datagramPackets.add(packet);
     }
 

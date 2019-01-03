@@ -3,8 +3,6 @@ import shared.Messages.Types.PlayerInputData;
 
 public class PlayerInputMessage extends UnreliableMessage<PlayerInputData> {
 
-    public PlayerInputMessage() {}
-
     public PlayerInputMessage(PlayerInputData data) {
         super(data);
     }

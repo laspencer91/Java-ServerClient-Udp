@@ -1,14 +1,11 @@
 package shared.Messages.Types;
 
 import lombok.NoArgsConstructor;
+import shared.serialization.NetworkWriter;
 
 @NoArgsConstructor
-public class PlayerInputData extends shared.Messages.Types.MessageData {
+public class PlayerInputData extends BaseMessageData {
         public int CS_PLAYER_INPUTS;
         public float aimAngle;
 
-        public PlayerInputData(int inputs, float aimAngle) {
-            this.CS_PLAYER_INPUTS = inputs;
-            this.aimAngle = aimAngle;
-        }
 }
