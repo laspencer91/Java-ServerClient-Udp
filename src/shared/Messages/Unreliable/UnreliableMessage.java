@@ -9,6 +9,8 @@ import shared.Messages.Types.BaseMessageData;
  */
 public abstract class UnreliableMessage<T extends BaseMessageData> extends NetMessage<T> {
 
+    public UnreliableMessage() {}
+
     public UnreliableMessage(T data) {
         super(data);
     }

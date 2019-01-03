@@ -1,7 +1,6 @@
 package shared.Messages.Types;
 
 import lombok.NoArgsConstructor;
-import shared.serialization.NetworkWriter;
 
 @NoArgsConstructor
 public class PlayerInputData extends BaseMessageData {

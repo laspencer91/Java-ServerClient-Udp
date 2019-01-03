@@ -85,4 +85,8 @@ public class NetworkWriter {
 
         return bytes;
     }
+
+    public ByteBuffer getByteBuffer() {
+        return byteBuffer;
+    }
 }
