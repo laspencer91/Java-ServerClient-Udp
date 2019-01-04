@@ -1,7 +1,7 @@
-package shared.Messages.Unreliable;
+package shared.messages.unreliable;
 import lombok.NoArgsConstructor;
-import shared.Messages.Types.NetMessageId;
-import shared.Messages.Types.PlayerInputData;
+import shared.messages.NetMessageId;
+import shared.messages.data.PlayerInputData;
 
 /** NOTE: NoArgsConstructor is required **/
 @NoArgsConstructor
@@ -24,8 +24,8 @@ public class PlayerInputMessage extends UnreliableMessage<PlayerInputData> {
     /**
      * Convienence method for creating a new message without having to create a PlayerInputData object first
      * @param playerInputs The Player inputs to use
-     * @param aimAngle  The aim angle to use for the data
-     * @return PlayerInputMessage with valid filled data
+     * @param aimAngle  The aim angle to use for the payload
+     * @return PlayerInputMessage with valid filled payload
      */
     public static PlayerInputMessage createNew(int playerInputs, float aimAngle ) {
 

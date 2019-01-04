@@ -8,7 +8,7 @@ public class NetworkWriter {
     private ByteBuffer byteBuffer;
 
     public NetworkWriter() {
-        byteBuffer = ByteBuffer.allocate(512);
+        byteBuffer = ByteBuffer.allocate(1024);
     }
 
     public NetworkWriter(int bufferSize) {
@@ -53,7 +53,7 @@ public class NetworkWriter {
 
     /**
      * Reading / Writing strings can be slow if done hundred times per frame. Try not to send strings as much
-     * as possible. Primitive types are much more efficient for speed.
+     * as possible. Primitive payload are much more efficient for speed.
      * @param string
      * @throws NetworkWriterException If the string is over 256 bytes. If long strings are needed then add a byte array.
      */

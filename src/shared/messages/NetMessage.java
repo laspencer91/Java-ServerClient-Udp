@@ -1,12 +1,13 @@
-package shared.Messages;
+package shared.messages;
 
 import com.google.common.reflect.TypeToken;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import shared.Messages.Types.IMessageData;
-import shared.Messages.Types.NetMessageId;
+import shared.messages.data.IMessageData;
 import shared.serialization.NetworkReader;
 import shared.serialization.NetworkWriter;
+import shared.statics.NetworkProtocol;
+import shared.statics.enums.MessageSendType;
 
 /**
  * NetMessage is what all  NetworkMessages should inherit from. It handles serialization and deserialization
@@ -21,53 +22,59 @@ public abstract class NetMessage<T extends IMessageData> {
 
     private Class dataClass = new TypeToken<T>(getClass()) { }.getRawType();
 
-    protected T data;
+    public PacketHeaderData header = new PacketHeaderData(NetworkProtocol.PROTOCOL_ID);
 
+    public final MessageSendType TYPE = getMessageSendType();
+
+    protected T payload;
 
     public NetMessage() {
     }
 
-    public NetMessage(T data) {
-        this.data = data;
+    public NetMessage(T payload) {
+        this.payload = payload;
         messageIdentifier = getIdentifier();
     }
 
     public void serialize(NetworkWriter writer) {
-        // TODO: Write Header
+        header.serialize(writer);
 
         writer.write(messageIdentifier.shortValue());
-        data.serialize(writer);
+        payload.serialize(writer);
     }
 
     public <B extends IMessageData> void deserialize(NetworkReader reader, Class<B> messageType) throws IllegalAccessException, InstantiationException {
-        // TODO: Read Header
+        // READ HEADER DATA
+        header.deserialize(reader);
+
+        // READ PAYLOAD DATA INTO THIS MESSAGE
         B messageData = messageType.newInstance();
-        data = (T) messageData;
-        data.deserialize(reader);
+        payload = (T) messageData;
+        payload.deserialize(reader);
     }
 
     /**
-     * Get the data that this class is housing
-     * @return The data
+     * Get the payload that this class is housing
+     * @return The payload
      */
-    public T getData() {
-        return data;
+    public T getPayload() {
+        return payload;
     }
 
     /**
-     * Get the class of the data this is housing
-     * @return The class of the data
+     * Get the class of the payload this is housing
+     * @return The class of the payload
      */
     public Class getDataClass() {
         return dataClass;
     }
 
     /**
-     * Using data stored in a reader return a NetMessage that it contains.
+     * Using payload stored in a reader return a NetMessage that it contains.
      * @param reader The reader to read from
      * @param classType The NetMessage subtype class to generate
      * @param <A> A type that extends NetMessage
-     * @return Filled out NetMessage from deserialized data
+     * @return Filled out NetMessage from deserialized payload
      */
     public static <A extends NetMessage> A read(NetworkReader reader, Class<A> classType) {
         A message = null;
@@ -83,4 +90,6 @@ public abstract class NetMessage<T extends IMessageData> {
     }
 
     public abstract NetMessageId getIdentifier();
+
+    protected abstract MessageSendType getMessageSendType();
 }

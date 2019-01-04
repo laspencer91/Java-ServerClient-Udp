@@ -2,53 +2,68 @@ package server;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import server.packetprocessing.PacketProcessor;
-import server.packetprocessing.ServerPacketProcessor;
+import shared.packetprocessing.ProcessingHub;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.SocketException;
 
-public class Server {
+public class Server extends ProcessingHub {
 
     private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
+    private static int protocolId;
+
     private boolean running;
+
+    private static Server activeInstance;
 
     private ServerPacketProcessor packetProcessor;
 
     private ServerConnectionHandler connectionHandler;
 
-    private List<PacketProcessor> packetProcessorList = new ArrayList<>();
-
-    public final static String PACKET_PROTOCOL_KEY = "IA";
-
-    // UDP
+    // UDP settings
     private Thread udpSocketThread;
     private DatagramSocket udpSocket;
     private byte[] udpBuffer = new byte[512];
     private int udpPort;
 
 
-    public Server(int udpPort) {
+    public Server(final int udpPort, final int protocolId) {
         this.udpPort = udpPort;
+        this.protocolId = protocolId;
         this.packetProcessor   = new ServerPacketProcessor(this);
         this.connectionHandler = new ServerConnectionHandler(this, 10);
+
+        try {
+            this.udpSocket = new DatagramSocket(udpPort);
+        } catch (SocketException e) {
+            LOGGER.error("SocketExceptions while trying to create Server.", e);
+        }
     }
 
-    public boolean StartServer() {
+    @Override
+    protected void onStart() {
+        // Check to see if a server is already running
+        if (activeInstance != null) {
+            LOGGER.warn("Currently only one server per program instance is supported. Shutting down other server to start");
+            activeInstance.shudown();
+            activeInstance = this;
+        } else {
+            activeInstance = this;
+        }
+
         running = true;
-
-        // Start all registered processors
-        for (PacketProcessor processor : packetProcessorList) { processor.start(); }
-
         udpSocketThread = new Thread(() -> runUdpThread(), "Udp Server Thread");
         udpSocketThread.start();
+    }
 
-        return true;
+    @Override
+    protected void onShutdown() {
+        activeInstance = null;
+        running = false;
     }
 
     public void runUdpThread() {
@@ -66,29 +81,24 @@ public class Server {
             int         receivedPort    = packet.getPort();
 
             packet = new DatagramPacket(udpBuffer, udpBuffer.length, receivedAddress, receivedPort);
-            packetProcessor.addWork(packet);
+            packetProcessor.addWorkItem(packet);
         }
         udpSocket.close();
     }
 
-    public void registerPacketProcessor(PacketProcessor processor) {
-        if (packetProcessorList.contains(processor)) {
-            LOGGER.error("Attempting to register packetProcessor " + processor.getClass() +
-                            " multiple times for this server. Note: packet processors register themselves on creation.");
-            return;
-        }
-
-        packetProcessorList.add(processor);
-    }
-
-    /** Server Shutdown Related Logic **/
-    public void shutdown() {
-        running = false;
-        // Shutdown all registered processors
-        for (PacketProcessor processor : packetProcessorList) { processor.shutdown(); }
-    }
-
     public ServerConnectionHandler getConnectionHandler() {
         return connectionHandler;
+    }
+
+    public int getProtocolId() {
+        return protocolId;
+    }
+
+    /**
+     * Get the current running server. Only one server per process is supported currently.
+     * @return The active server instance
+     */
+    public static Server getActiveInstance() {
+        return activeInstance;
     }
 }

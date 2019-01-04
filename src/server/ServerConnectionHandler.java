@@ -2,7 +2,12 @@ package server;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import server.packetprocessing.PacketProcessor;
+import shared.messages.NetMessageId;
+import shared.messages.PacketHeaderData;
+import shared.packetprocessing.GenericProcessor;
+import shared.serialization.NetworkReader;
+import shared.statics.enums.ConnectionStatus;
+import shared.utils.NetUtils;
 
 import java.net.DatagramPacket;
 import java.util.*;
@@ -11,10 +16,10 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * This is the Class that is responsible for managing connections. These responsibilities include beginning the
- * connection process, following through that process to the end, and providing an interface to gather data about these
- * connections. It is a PacketProcessor and its operations are running on its own thread.
+ * connection process, following through that process to the end, and providing an interface to gather payload about these
+ * connections. It is a GenericProcessor and its operations are running on its own thread.
  */
-public class ServerConnectionHandler extends PacketProcessor {
+public class ServerConnectionHandler extends GenericProcessor<DatagramPacket> {
 
     private static final Logger LOGGER = LogManager.getLogger(ServerConnectionHandler.class);
 
@@ -30,13 +35,28 @@ public class ServerConnectionHandler extends PacketProcessor {
         for (int i = 0; i < maxConnections; i++) { freeIds.push(i); } // Initialize Id Queue.
     }
 
-    @Override
-    public void ProcessPacket(DatagramPacket packet) {
+    NetworkReader reader = new NetworkReader();
+    PacketHeaderData header = new PacketHeaderData();
 
+    @Override
+    public void processItem(DatagramPacket packet) {
+        byte[] data = packet.getData();
+
+        // Set our reader to look at the recieved data and then set our cached header values to the deserialzied values
+        reader.setBuffer(data);
+        header.deserialize(reader);
+
+        NetMessageId messageId = NetMessageId.fromShort(reader.readShort());
+
+        switch (messageId) {
+            case CONNECTION_REQUEST:
+                LOGGER.info("User {} has sent a connection request!", reader.readString());
+                break;
+        }
     }
 
     public void beginNewConnection(String ip, int port) {
-         String key = getKeyFromAddress(ip, port);
+         String key = NetUtils.getConnectionKeyFromAddress(ip, port);
 
          if (connections.containsKey(key)) {
              LOGGER.error("Attempting to start a new connection when the ip and port are already in our connections.");
@@ -76,7 +96,10 @@ public class ServerConnectionHandler extends PacketProcessor {
         this.maxConnections = maxConnections;
     }
 
-    public static String getKeyFromAddress(String ip, int port) {
-        return ip + ":" + port;
+    public boolean connectionEstablished(DatagramPacket packet) {
+        String key = NetUtils.getConnectionKeyFromAddress(packet.getAddress().getHostAddress(), packet.getPort());
+        Connection conn = connections.get(key);
+
+        return (conn != null) && conn.getStatus() == ConnectionStatus.CONNECTED;
     }
 }

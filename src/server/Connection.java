@@ -1,19 +1,23 @@
 package server;
 
-import server.types.enums.ConnectionState;
+import shared.statics.enums.ConnectionStatus;
 
 public class Connection {
 
-    private ConnectionState state;
+    private ConnectionStatus status;
 
     private int connectionId;
 
     public Connection(int id) {
-        state = ConnectionState.PENDING;
+        status = ConnectionStatus.PENDING;
         connectionId = id;
     }
 
-    public void SetState(ConnectionState state) {
-        this.state = state;
+    public void setStatus(ConnectionStatus status) {
+        this.status = status;
+    }
+
+    public ConnectionStatus getStatus() {
+        return status;
     }
 }
