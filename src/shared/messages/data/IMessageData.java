@@ -1,4 +1,4 @@
-package shared.messages.types;
+package shared.messages.data;
 
 import shared.serialization.NetworkReader;
 import shared.serialization.NetworkWriter;

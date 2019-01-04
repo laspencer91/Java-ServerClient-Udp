@@ -1,7 +1,8 @@
-package shared.Messages.Types;
+package shared.messages;
 
 public enum NetMessageId {
-    PLAYER_INPUT ((short) 0);
+    CONNECTION_REQUEST((short) 0),
+    PLAYER_INPUT ((short) 1);
 
     private short value;
 

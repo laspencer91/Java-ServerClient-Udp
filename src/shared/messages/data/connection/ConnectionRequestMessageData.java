@@ -1,7 +1,7 @@
-package shared.messages.types.connection;
+package shared.messages.data.connection;
 
 import shared.exceptions.NetworkWriterException;
-import shared.messages.types.IMessageData;
+import shared.messages.data.IMessageData;
 import shared.serialization.NetworkReader;
 import shared.serialization.NetworkWriter;
 
@@ -15,7 +15,7 @@ public class ConnectionRequestMessageData implements IMessageData {
     public String userName;
 
     public ConnectionRequestMessageData(String userName) {
-        userName = userName;
+        this.userName = userName;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package shared.messages.types;
+package shared.messages.data;
 
 import lombok.NoArgsConstructor;
 import shared.serialization.NetworkReader;
